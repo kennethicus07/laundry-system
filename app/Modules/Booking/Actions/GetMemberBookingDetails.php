@@ -13,7 +13,10 @@ final class GetMemberBookingDetails
         return Booking::query()
             ->whereKey($bookingId)
             ->where('customer_id', $customerId)
-            ->with('items')
+            ->with([
+                'items',
+                'order.schedules',
+            ])
             ->firstOrFail();
     }
 }

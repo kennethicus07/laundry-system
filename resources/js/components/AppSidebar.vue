@@ -12,6 +12,9 @@ import {
     UserRoundCog,
     Users,
     Bell,
+    CalendarCheck,
+    Truck,
+    WashingMachine,
 } from 'lucide-vue-next';
 
 import AppLogo from '@/components/AppLogo.vue';
@@ -38,7 +41,9 @@ const roles = computed(() => page.props.auth?.roles ?? []);
 const isAdmin = computed(
     () =>
         roles.value.includes('super-admin') ||
-        roles.value.includes('moderator'),
+        roles.value.includes('moderator') ||
+        roles.value.includes('staff') ||
+        roles.value.includes('officer'),
 );
 
 const isMember = computed(() => roles.value.includes('member'));
@@ -59,6 +64,36 @@ const mainNavItems = computed<NavItem[]>(() => {
                 title: 'Dashboard',
                 href: '/admin/dashboard',
                 icon: LayoutGrid,
+            },
+            {
+                title: 'Booking Requests',
+                href: '/admin/bookings',
+                icon: LayoutGrid,
+            },
+            {
+                title: 'Pickup Scheduling',
+                href: '/admin/pickup-schedules',
+                icon: LayoutGrid,
+            },
+            {
+                title: 'Pickup Assignments',
+                href: '/admin/pickups',
+                icon: LayoutGrid,
+            },
+            {
+                title: 'Laundry Processing',
+                href: '/admin/processing',
+                icon: WashingMachine,
+            },
+            {
+                title: 'Delivery Scheduling',
+                href: '/admin/delivery-schedules',
+                icon: CalendarCheck,
+            },
+            {
+                title: 'Delivery Assignments',
+                href: '/admin/deliveries',
+                icon: Truck,
             },
             {
                 title: 'Users',

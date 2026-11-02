@@ -7,6 +7,7 @@ use App\Modules\Booking\Actions\CreateBooking;
 use App\Modules\Booking\Actions\GetMemberBookingDetails;
 use App\Modules\Booking\Actions\GetMemberBookings;
 use App\Modules\Booking\DTO\CreateBookingData;
+use App\Modules\Booking\Actions\CancelMemberBooking;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -71,4 +72,28 @@ class BookingController extends Controller
         return Redirect::route('member.bookings.show', $booking->id)
             ->with('success', 'Your booking request has been submitted.');
     }
+
+
+    public function cancel(
+        Request $request,
+        int $booking,
+        CancelMemberBooking $action,
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'cancellation_reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $action->execute(
+            bookingId: $booking,
+            customerId: (int) $request->user()->id,
+            reason: isset($validated['cancellation_reason'])
+                ? trim($validated['cancellation_reason']) ?: null
+                : null,
+        );
+
+        return Redirect::route('member.bookings.show', $booking)
+            ->with('success', 'Your booking has been cancelled.');
+    }
+
+    
 }

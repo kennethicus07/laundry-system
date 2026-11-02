@@ -24,7 +24,7 @@ interface Booking {
     booking_number: string;
     status: 'pending' | 'confirmed' | 'rejected' | 'cancelled';
     pickup_address: string;
-    preferred_pickup_at: string;
+    preferred_pickup_at: string | null;
     created_at: string;
     rejection_reason?: string | null;
     cancellation_reason?: string | null;
@@ -202,8 +202,23 @@ function estimatedTotal(booking: Booking): number {
                             <p class="text-sm text-muted-foreground">
                                 Preferred pickup
                             </p>
+
                             <p class="mt-1 text-sm font-medium">
-                                {{ dateTime(booking.preferred_pickup_at) }}
+                                {{
+                                    booking.preferred_pickup_at
+                                        ? dateTime(booking.preferred_pickup_at)
+                                        : 'Not specified'
+                                }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-muted-foreground">
+                                Pickup address
+                            </p>
+
+                            <p class="mt-1 text-sm font-medium">
+                                {{ booking.pickup_address }}
                             </p>
                         </div>
 
@@ -211,12 +226,12 @@ function estimatedTotal(booking: Booking): number {
                             <p class="text-sm text-muted-foreground">
                                 Estimated total
                             </p>
+
                             <p class="mt-1 text-lg font-semibold">
                                 {{ money(estimatedTotal(booking)) }}
                             </p>
                         </div>
                     </div>
-
                     <p
                         v-if="
                             booking.status === 'rejected' &&

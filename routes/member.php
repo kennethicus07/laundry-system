@@ -22,6 +22,7 @@ Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
         Route::prefix('bookings')->name('bookings.')->group(function () {
             Route::get('/', [BookingController::class, 'index'])->name('index');
             Route::get('/{booking}', [BookingController::class, 'show'])->whereNumber('booking')->name('show');
+            Route::post('/{booking}/cancel', [BookingController::class,'cancel',])->whereNumber('booking')->name('cancel');
         });
       
 

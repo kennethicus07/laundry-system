@@ -24,6 +24,7 @@ class Schedule extends Model
         'type',
         'status',
         'scheduled_at',
+        'address_snapshot',
         'started_at',
         'completed_at',
         'outcome_notes',

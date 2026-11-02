@@ -26,7 +26,10 @@ class Booking extends Model
         'status',
         'confirmed_by',
         'confirmed_at',
+        'rejected_by',
+        'rejected_at',
         'rejection_reason',
+        'cancelled_by',
         'cancelled_at',
         'cancellation_reason',
     ];
@@ -37,6 +40,7 @@ class Booking extends Model
             'preferred_pickup_at' => 'datetime',
             'confirmed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'rejected_at' => 'datetime',
         ];
     }
 
@@ -48,6 +52,11 @@ class Booking extends Model
     public function confirmer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'confirmed_by');
+    }
+
+    public function rejecter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 
     public function order(): HasOne

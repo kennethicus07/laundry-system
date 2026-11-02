@@ -7,4 +7,5 @@ return [
     AppServiceProvider::class,
     FortifyServiceProvider::class,
     App\Modules\Services\Providers\ServicesModuleProvider::class,
+    App\Modules\Orders\Providers\OrdersModuleProvider::class,
 ];
