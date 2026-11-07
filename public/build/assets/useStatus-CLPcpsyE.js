@@ -1,0 +1,1 @@
+var e={1:`success`,2:`secondary`,0:`destructive`};function t(){function t(t){return{label:t.label,variant:e[t.value]??`secondary`}}function n(t){return{label:t.label,variant:e[t.value]}}return{get:t,fromStatus:n}}export{t};
