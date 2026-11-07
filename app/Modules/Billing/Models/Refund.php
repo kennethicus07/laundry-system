@@ -2,18 +2,28 @@
 
 namespace App\Modules\Billing\Models;
 
+use App\Models\User;
+use App\Modules\Billing\Enums\RefundStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
 
 class Refund extends Model
 {
-    public const STATUS_REQUESTED = 'requested';
-    public const STATUS_APPROVED = 'approved';
-    public const STATUS_PROCESSING = 'processing';
-    public const STATUS_COMPLETED = 'completed';
-    public const STATUS_REJECTED = 'rejected';
-    public const STATUS_FAILED = 'failed';
+    /**
+     * Refunds in these statuses reserve part of the payment so two
+     * simultaneous requests cannot exceed the original amount.
+     */
+    public const RESERVING_STATUSES = [
+        RefundStatus::Requested->value,
+        RefundStatus::Approved->value,
+        RefundStatus::Processing->value,
+    ];
+
+    /** Statuses a manager may still approve or reject. */
+    public const DECIDABLE_STATUSES = [
+        RefundStatus::Requested->value,
+    ];
 
     protected $fillable = [
         'payment_id',
@@ -27,27 +37,73 @@ class Refund extends Model
         'processed_at',
     ];
 
+    protected $attributes = [
+        'status' => RefundStatus::Requested->value,
+    ];
+
     protected function casts(): array
     {
         return [
+            'payment_id' => 'integer',
             'amount' => 'decimal:2',
+            'status' => RefundStatus::class,
+            'requested_by' => 'integer',
+            'approved_by' => 'integer',
             'requested_at' => 'datetime',
             'processed_at' => 'datetime',
         ];
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
     public function payment(): BelongsTo
     {
-        return $this->belongsTo(Payment::class, 'payment_id');
+        return $this->belongsTo(Payment::class);
     }
 
-    public function requester(): BelongsTo
+    public function requestedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'requested_by');
     }
 
-    public function approver(): BelongsTo
+    public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->where('status', RefundStatus::Completed->value);
+    }
+
+    public function scopeReserving(Builder $query): Builder
+    {
+        return $query->whereIn('status', self::RESERVING_STATUSES);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function isAwaitingDecision(): bool
+    {
+        return in_array($this->status->value, self::DECIDABLE_STATUSES, true);
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status === RefundStatus::Completed;
     }
 }

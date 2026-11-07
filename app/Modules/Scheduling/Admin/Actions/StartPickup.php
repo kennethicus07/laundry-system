@@ -9,20 +9,21 @@ use Illuminate\Support\Facades\DB;
 
 final class StartPickup
 {
-    public function execute(int $scheduleId, int $staffId): void
-    {
-        DB::transaction(function () use ($scheduleId, $staffId): void {
+    public function execute(
+        int $scheduleId,
+        int $staffId,
+        string $photoPath,
+    ): void {
+        DB::transaction(function () use (
+            $scheduleId,
+            $staffId,
+            $photoPath
+        ): void {
             $schedule = Schedule::query()
                 ->lockForUpdate()
                 ->findOrFail($scheduleId);
 
             $this->ensureAssignedStaff($schedule, $staffId);
-
-            if ($schedule->status !== Schedule::STATUS_SCHEDULED) {
-                throw new DomainException(
-                    "Pickup cannot start from status: {$schedule->status}"
-                );
-            }
 
             if ($schedule->type !== Schedule::TYPE_PICKUP) {
                 throw new DomainException(
@@ -30,9 +31,18 @@ final class StartPickup
                 );
             }
 
+            if ($schedule->status !== Schedule::STATUS_SCHEDULED) {
+                throw new DomainException(
+                    "Pickup cannot start from status: {$schedule->status}"
+                );
+            }
+
+            // Save pickup proof and start the pickup in one write.
             $schedule->update([
                 'status' => Schedule::STATUS_IN_PROGRESS,
                 'started_at' => now(),
+                'photo_path' => $photoPath,
+                'photo_taken_at' => now(),
             ]);
         });
     }

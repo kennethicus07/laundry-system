@@ -27,6 +27,7 @@ interface Booking {
     booking_number: string;
     customer_id: number;
     pickup_address: string;
+    mobile_number: string;
     preferred_pickup_at: string;
     customer_notes: string | null;
     status: 'pending' | 'confirmed' | 'rejected' | 'cancelled';
@@ -251,6 +252,13 @@ function rejectBooking() {
                     <p class="text-sm text-muted-foreground">Pickup address</p>
                     <p class="font-medium whitespace-pre-line">
                         {{ booking.pickup_address }}
+                    </p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-muted-foreground">Mobile Number</p>
+                    <p class="font-medium whitespace-pre-line">
+                        {{ booking.mobile_number }}
                     </p>
                 </div>
 

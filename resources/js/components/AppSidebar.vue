@@ -96,6 +96,11 @@ const mainNavItems = computed<NavItem[]>(() => {
                 icon: Truck,
             },
             {
+                title: 'Invoice',
+                href: '/admin/invoices',
+                icon: Truck,
+            },
+            {
                 title: 'Users',
                 href: '/admin/users',
                 icon: Users,

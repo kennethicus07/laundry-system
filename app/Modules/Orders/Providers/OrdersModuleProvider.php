@@ -12,6 +12,14 @@ use App\Modules\Orders\Contracts\OrderProcessor;
 use App\Modules\Orders\Services\ProcessLaundryOrder;
 use App\Modules\Orders\Contracts\ProcessingOrders;
 use App\Modules\Orders\Services\ListProcessingOrders;
+use App\Modules\Orders\Contracts\DeliveryScheduleOrders;
+use App\Modules\Orders\Services\ListOrdersAvailableForDelivery;
+use App\Modules\Orders\Contracts\OrderDeliverer;
+use App\Modules\Orders\Services\DeliverLaundryOrder;
+use App\Modules\Orders\Contracts\BillableOrder;
+use App\Modules\Orders\Repositories\EloquentBillableOrderReader;
+
+
 use Illuminate\Support\ServiceProvider;
 
 class OrdersModuleProvider extends ServiceProvider
@@ -42,7 +50,21 @@ class OrdersModuleProvider extends ServiceProvider
             ProcessingOrders::class,
             ListProcessingOrders::class
         );
-                
+
+        $this->app->bind(
+            DeliveryScheduleOrders::class,
+            ListOrdersAvailableForDelivery::class,
+        );
+
+        $this->app->bind(
+            OrderDeliverer::class,
+            DeliverLaundryOrder::class,
+        );
+               
+       $this->app->bind(
+    BillableOrder::class,
+    EloquentBillableOrderReader::class,
+);
         
     }
 }

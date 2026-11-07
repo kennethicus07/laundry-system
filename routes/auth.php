@@ -10,7 +10,12 @@ use App\Modules\Dashboard\Admin\Controllers\DashboardController;
 use App\Modules\Booking\Admin\Controllers\BookingController;
 use App\Modules\Scheduling\Admin\Controllers\PickupController;
 use App\Modules\Scheduling\Admin\Controllers\PickupScheduleController;
+use App\Modules\Scheduling\Admin\Controllers\DeliveryScheduleController;
+use App\Modules\Scheduling\Admin\Controllers\DeliveryController;
 use App\Modules\Processing\Admin\Controllers\ProcessingController;
+use App\Modules\Billing\Admin\Controllers\InvoiceController;
+use App\Modules\Billing\Admin\Controllers\PaymentController;
+use App\Modules\Billing\Admin\Controllers\RefundController;
 
 Route::middleware(['auth', 'verified', 'role:super-admin|moderator|staff|officer'])->group(function () {
 
@@ -85,12 +90,45 @@ Route::middleware(['auth', 'verified', 'role:super-admin|moderator|staff|officer
             Route::post('/{order}/start', [ProcessingController::class,'start',])->whereNumber('order')->name('start');
             Route::post('/{order}/complete', [ProcessingController::class,'complete',])->whereNumber('order')->name('complete');
         });
-        
+
+        Route::prefix('delivery-schedules')->name('delivery-schedules.')->group(function () {
+            Route::get('/', [DeliveryScheduleController::class,'index'])->name('index');
+            Route::post('/', [DeliveryScheduleController::class,'store',])->name('store');
+        });
+
+        Route::prefix('deliveries')->name('deliveries.')->group(function () {
+            Route::get('/', [DeliveryController::class,'index'])->name('index');
+            Route::post('/{schedule}/start', [DeliveryController::class,'start'])->name('start');
+            Route::post('/{schedule}/complete', [DeliveryController::class,'complete'])->name('complete');
+            Route::post('/{schedule}/missed', [DeliveryController::class,'missed'])->name('missed');
+        });
+
+        Route::prefix('invoices')->name('invoices.')->group(function () {
+            Route::get('/', [InvoiceController::class, 'index'])->name('index');
+            Route::post('/', [InvoiceController::class, 'store'])->name('store');
+            Route::get('/billable-orders', [InvoiceController::class, 'billableOrders'])->name('billable-orders');
+            Route::get('/{invoice}', [InvoiceController::class, 'show'])->whereNumber('invoice')->name('show');
+            Route::post('/{invoice}/payments/cash', [PaymentController::class, 'storeCash'])->whereNumber('invoice')->name('payments.cash');
+            // Route::post('/{invoice}/payments/qr', [PaymentController::class, 'storeQr'])->whereNumber('invoice')->name('payments.qr');
+            // Route::post('/{invoice}/revise', [InvoiceController::class, 'revise'])->whereNumber('invoice')->name('revise');
+        });
+ 
+        Route::prefix('payments')->name('payments.')->group(function () {
+            Route::get('/pending-qr', [PaymentController::class, 'pendingQr'])->name('pending-qr');
+            // Route::get('/{payment}/proof', [PaymentController::class, 'proof'])->whereNumber('payment')->name('proof');
+            // Route::post('/{payment}/verify', [PaymentController::class, 'verify'])->whereNumber('payment')->name('verify');
+            // Route::post('/{payment}/reject', [PaymentController::class, 'reject'])->whereNumber('payment')->name('reject');
+            // Route::post('/{payment}/refunds', [RefundController::class, 'store'])->whereNumber('payment')->name('refunds.store');
+        });
+ 
+        Route::prefix('refunds')->name('refunds.')->group(function () {
+            Route::get('/', [RefundController::class, 'index'])->name('index');
+            // Only managers approve or reject refunds:
+            // Route::post('/{refund}/approve', [RefundController::class, 'approve'])->whereNumber('refund')->middleware('role:super-admin|moderator')->name('approve');
+            // Route::post('/{refund}/reject', [RefundController::class, 'reject'])->whereNumber('refund')->middleware('role:super-admin|moderator')->name('reject');
+            // Route::post('/{refund}/complete', [RefundController::class, 'complete'])->whereNumber('refund')->name('complete');
+        });
+            
     });
-
-
-
-       
-
  
 });

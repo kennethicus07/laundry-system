@@ -21,6 +21,7 @@ interface AvailableOrder {
     id: number;
     orderNumber: string;
     bookingNumber: string | null;
+    mobileNumber: string | null;
     status: string;
     customerName: string;
     requestedPickupAt: string | null;
@@ -54,6 +55,10 @@ interface Schedule {
     order: {
         id: number;
         order_number: string;
+        booking: {
+            id: number;
+            booking_number: string;
+        } | null;
     } | null;
     assigned_staff: {
         id: number;
@@ -535,6 +540,20 @@ function changeSchedulesPage(url: string | null) {
                         </p>
                     </div>
 
+                    <div>
+                        <p class="text-sm font-medium">
+                            Customer's mobile number
+                        </p>
+
+                        <p
+                            class="mt-1 text-sm break-words text-muted-foreground"
+                        >
+                            {{
+                                selectedOrder.mobileNumber || 'No mobile number'
+                            }}
+                        </p>
+                    </div>
+
                     <button
                         v-if="selectedOrder.preferredPickUpAddress"
                         type="button"
@@ -699,9 +718,7 @@ function changeSchedulesPage(url: string | null) {
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <p class="text-sm text-muted-foreground">
                         {{ schedules.total }}
-                        {{
-                            schedules.total === 1 ? 'schedule' : 'schedules'
-                        }}
+                        {{ schedules.total === 1 ? 'schedule' : 'schedules' }}
                         found
                     </p>
 
@@ -719,6 +736,7 @@ function changeSchedulesPage(url: string | null) {
                 <table class="w-full min-w-[700px] text-left text-sm">
                     <thead>
                         <tr class="border-b text-muted-foreground">
+                            <th class="px-4 py-3 font-medium">Booking</th>
                             <th class="px-4 py-3 font-medium">Order</th>
                             <th class="px-4 py-3 font-medium">Officer</th>
                             <th class="px-4 py-3 font-medium">Scheduled</th>
@@ -733,6 +751,15 @@ function changeSchedulesPage(url: string | null) {
                             :key="schedule.id"
                             class="border-b last:border-0"
                         >
+                            <!-- Booking -->
+                            <td class="px-4 py-3 font-medium">
+                                {{
+                                    schedule.order?.booking?.booking_number ??
+                                    '—'
+                                }}
+                            </td>
+
+                            <!-- Order -->
                             <td class="px-4 py-3 font-medium">
                                 {{
                                     schedule.order?.order_number ??
@@ -740,6 +767,7 @@ function changeSchedulesPage(url: string | null) {
                                 }}
                             </td>
 
+                            <!-- Officer -->
                             <td class="px-4 py-3">
                                 {{
                                     schedule.assigned_staff?.name ??
@@ -747,14 +775,17 @@ function changeSchedulesPage(url: string | null) {
                                 }}
                             </td>
 
+                            <!-- Scheduled -->
                             <td class="px-4 py-3">
                                 {{ formatDate(schedule.scheduled_at) }}
                             </td>
 
+                            <!-- Address -->
                             <td class="max-w-xs px-4 py-3">
                                 {{ schedule.address_snapshot ?? '—' }}
                             </td>
 
+                            <!-- Status -->
                             <td class="px-4 py-3">
                                 <Badge variant="secondary" class="capitalize">
                                     {{ formatStatus(schedule.status) }}

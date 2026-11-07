@@ -65,11 +65,12 @@ public function index(
         Schedule::STATUS_CANCELLED,
     ];
 
-    $schedules = Schedule::query()
-        ->with([
-            'order:id,order_number',
-            'assignedStaff:id,name',
-        ])
+$schedules = Schedule::query()
+    ->with([
+        'order:id,order_number,booking_id',
+        'order.booking:id,booking_number',
+        'assignedStaff:id,name',
+    ])
         ->where('type', Schedule::TYPE_PICKUP)
         ->when(
             $scheduleStatus !== 'all'
@@ -92,6 +93,9 @@ public function index(
                             $term,
                         );
                     })
+                    ->orWhereHas('order.booking', function (Builder $bookingQuery) use ($term) {
+                            $bookingQuery->where('booking_number', 'like', $term);
+                        })
                     ->orWhereHas('assignedStaff', function (Builder $staffQuery) use ($term) {
                         $staffQuery->where('name', 'like', $term);
                     });

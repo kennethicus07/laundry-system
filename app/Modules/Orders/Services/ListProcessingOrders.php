@@ -5,6 +5,7 @@ namespace App\Modules\Orders\Services;
 use App\Modules\Orders\Contracts\ProcessingOrders;
 use App\Modules\Orders\DTO\ProcessingOrderData;
 use App\Modules\Orders\Models\LaundryOrder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use InvalidArgumentException;
 
@@ -28,17 +29,25 @@ final class ListProcessingOrders implements ProcessingOrders
         }
 
         $orders = LaundryOrder::query()
-            ->with(['customer', 'items'])
+            ->with(['customer', 'items','booking:id,booking_number,preferred_pickup_at,pickup_address,mobile_number',])
             ->whereIn('status', $statuses)
             ->when(trim($search) !== '', function ($query) use ($search) {
                 $term = trim($search);
 
-                $query->where(function ($query) use ($term) {
-                    $query->where('order_number', 'like', "%{$term}%")
-                        ->orWhereHas('customer', function ($customerQuery) use ($term) {
-                            $customerQuery->where('name', 'like', "%{$term}%");
-                        });
-                });
+             $query->where(function (Builder $query) use ($search) {
+                $query
+                    ->where('order_number', 'like', "%{$search}%")
+                    ->orWhereHas(
+                        'customer',
+                        fn (Builder $customer) => $customer
+                            ->where('name', 'like', "%{$search}%"),
+                    )
+                    ->orWhereHas(
+                        'booking',
+                        fn (Builder $booking) => $booking
+                            ->where('booking_number', 'like', "%{$search}%"),
+                    );
+            });
             })
             ->latest('updated_at')
             ->paginate($perPage)

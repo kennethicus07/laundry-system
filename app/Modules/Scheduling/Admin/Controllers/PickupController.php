@@ -10,6 +10,7 @@ use App\Modules\Scheduling\Admin\Actions\StartPickup;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -31,15 +32,37 @@ final class PickupController extends Controller
         int $schedule,
         StartPickup $action
     ): RedirectResponse {
+        $request->validate([
+            'photo' => [
+                'required',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
+            ],
+        ]);
+
+        $path = $request->file('photo')->store(
+            'pickup-proofs',
+            'public'
+        );
+
         try {
             $action->execute(
                 $schedule,
-                (int) $request->user()->id
+                (int) $request->user()->id,
+                $path,
             );
         } catch (DomainException $exception) {
+            Storage::disk('public')->delete($path);
+
             return back()->withErrors([
                 'pickup' => $exception->getMessage(),
             ]);
+        } catch (\Throwable $exception) {
+            // Don't leave orphaned photos if anything else fails.
+            Storage::disk('public')->delete($path);
+
+            throw $exception;
         }
 
         return back()->with(

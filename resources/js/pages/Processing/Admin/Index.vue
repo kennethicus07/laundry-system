@@ -29,6 +29,7 @@ interface ProcessingItem {
 interface ProcessingOrder {
     id: number;
     orderNumber: string;
+    bookingNumber: string;
     status: string;
     customerName: string | null;
     receivedAt: string | null;
@@ -287,7 +288,7 @@ function completeProcessing(order: ProcessingOrder) {
                         <CardTitle class="text-base">
                             {{ order.orderNumber }}
                         </CardTitle>
-
+                        <h3>{{ order.bookingNumber }}</h3>
                         <div
                             class="flex items-center gap-2 text-sm text-muted-foreground"
                         >

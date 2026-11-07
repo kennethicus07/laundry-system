@@ -48,6 +48,7 @@ class BookingController extends Controller
     ): RedirectResponse {
         $validated = $request->validate([
             'pickup_address' => ['required', 'string', 'max:2000'],
+            'mobile_number' => ['nullable','string', 'max:20'],
             'preferred_pickup_at' => ['required', 'date', 'after:now'],
             'estimated_quantity' => [
                 'required',
@@ -55,6 +56,7 @@ class BookingController extends Controller
                 'gt:0',
                 'max:100000',
             ],
+            
             'customer_notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
@@ -63,6 +65,7 @@ class BookingController extends Controller
                 customerId: (int) $request->user()->id,
                 serviceId: $service,
                 pickupAddress: $validated['pickup_address'],
+                mobileNumber: $validated['mobile_number'],
                 preferredPickupAt: $validated['preferred_pickup_at'],
                 estimatedQuantity: (string) $validated['estimated_quantity'],
                 customerNotes: $validated['customer_notes'] ?? null,

@@ -18,6 +18,7 @@ class InvoiceItem extends Model
     protected function casts(): array
     {
         return [
+            'invoice_id' => 'integer',
             'quantity' => 'decimal:2',
             'unit_price' => 'decimal:2',
             'line_total' => 'decimal:2',
@@ -26,6 +27,19 @@ class InvoiceItem extends Model
 
     public function invoice(): BelongsTo
     {
-        return $this->belongsTo(Invoice::class, 'invoice_id');
+        return $this->belongsTo(Invoice::class);
+    }
+
+    /**
+     * Snapshot data used when copying this item into invoice_revision_items.
+     */
+    public function toSnapshot(): array
+    {
+        return [
+            'description' => $this->description,
+            'quantity' => $this->quantity,
+            'unit_price' => $this->unit_price,
+            'line_total' => $this->line_total,
+        ];
     }
 }

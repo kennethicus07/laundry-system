@@ -28,6 +28,8 @@ class Schedule extends Model
         'started_at',
         'completed_at',
         'outcome_notes',
+        'photo_path',
+        'photo_taken_at'
     ];
 
     protected function casts(): array
@@ -36,6 +38,7 @@ class Schedule extends Model
             'scheduled_at' => 'datetime',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'photo_taken_at' => 'datetime'
         ];
     }
 

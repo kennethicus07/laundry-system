@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, onBeforeUnmount } from 'vue';
 
 type Pickup = {
     id: number;
@@ -10,6 +10,8 @@ type Pickup = {
     started_at: string | null;
     completed_at: string | null;
     outcome_notes: string | null;
+    photo_path: string | null;
+    photo_taken_at: string | null;
     order: {
         id: number;
         order_number: string;
@@ -55,6 +57,12 @@ const confirmation = reactive<{
 
 const isSubmitting = ref(false);
 
+// Photo upload state
+const photoFile = ref<File | null>(null);
+const photoPreview = ref<string | null>(null);
+const photoInput = ref<HTMLInputElement | null>(null);
+const photoClientError = ref<string | null>(null);
+
 const flash = computed(() => {
     return page.props.flash as { success?: string; error?: string } | undefined;
 });
@@ -77,7 +85,7 @@ const confirmationTitle = computed(() => {
 const confirmationMessage = computed(() => {
     switch (confirmation.action) {
         case 'start':
-            return 'Are you sure you want to start this pickup?';
+            return 'Take a photo of the laundry you are collecting. A photo is required to start this pickup.';
         case 'complete':
             return 'Confirm that you have physically collected the laundry before completing this pickup.';
         case 'missed':
@@ -96,8 +104,74 @@ const confirmationButtonLabel = computed(() => {
     }
 });
 
+// --------------------------------------------------
+// Photo handling
+// --------------------------------------------------
+
+function clearPhoto() {
+    if (photoPreview.value) {
+        URL.revokeObjectURL(photoPreview.value);
+    }
+
+    photoFile.value = null;
+    photoPreview.value = null;
+
+    if (photoInput.value) {
+        photoInput.value.value = '';
+    }
+}
+
+function selectPhoto() {
+    photoInput.value?.click();
+}
+
+function handlePhotoChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+    if (!allowedTypes.includes(file.type)) {
+        clearPhoto();
+        photoClientError.value = 'Only JPG, PNG or WEBP images are allowed.';
+
+        return;
+    }
+
+    // Maximum file size: 5 MB
+    if (file.size > 5 * 1024 * 1024) {
+        clearPhoto();
+        photoClientError.value = 'The photo must be 5 MB or smaller.';
+
+        return;
+    }
+
+    clearPhoto();
+    photoClientError.value = null;
+
+    photoFile.value = file;
+    photoPreview.value = URL.createObjectURL(file);
+}
+
+function removePhoto() {
+    clearPhoto();
+}
+
+onBeforeUnmount(() => {
+    clearPhoto();
+});
+
+// --------------------------------------------------
+// Confirmation
+// --------------------------------------------------
+
 function requestConfirmation(pickup: Pickup, action: PickupAction) {
     if (isSubmitting.value) return;
+
+    clearPhoto();
+    photoClientError.value = null;
 
     confirmation.pickup = pickup;
     confirmation.action = action;
@@ -106,6 +180,8 @@ function requestConfirmation(pickup: Pickup, action: PickupAction) {
 function closeConfirmation() {
     if (isSubmitting.value) return;
 
+    clearPhoto();
+    photoClientError.value = null;
     confirmation.pickup = null;
 }
 
@@ -116,6 +192,43 @@ function confirmAction() {
 
     const action = confirmation.action;
     const url = `/admin/pickups/${pickup.id}/${action}`;
+
+    // Photo is mandatory for starting a pickup.
+    if (action === 'start') {
+        if (!photoFile.value) return;
+
+        const formData = new FormData();
+        formData.append('photo', photoFile.value);
+
+        router.post(url, formData, {
+            forceFormData: true,
+            preserveScroll: true,
+
+            onStart: () => {
+                isSubmitting.value = true;
+            },
+
+            onSuccess: () => {
+                clearPhoto();
+                confirmation.pickup = null;
+            },
+
+            onError: (errors) => {
+                // Status/assignment errors are shown on the page, so close
+                // the modal. Photo errors stay inside the modal.
+                if (errors.pickup) {
+                    clearPhoto();
+                    confirmation.pickup = null;
+                }
+            },
+
+            onFinish: () => {
+                isSubmitting.value = false;
+            },
+        });
+
+        return;
+    }
 
     const data =
         action === 'missed'
@@ -140,6 +253,10 @@ function confirmAction() {
         },
     });
 }
+
+// --------------------------------------------------
+// Formatting
+// --------------------------------------------------
 
 function formatDate(value: string | null) {
     if (!value) return 'Not recorded';
@@ -183,6 +300,10 @@ function visitPage(url: string | null) {
     router.visit(url, {
         preserveScroll: true,
     });
+}
+
+function photoUrl(path: string) {
+    return `/storage/${path}`;
 }
 </script>
 
@@ -333,6 +454,28 @@ function visitPage(url: string | null) {
                     </div>
                 </div>
 
+                <!-- Saved pickup photo -->
+                <div v-if="pickup.photo_path" class="space-y-2 border-t pt-4">
+                    <h3 class="text-sm font-semibold">Pickup Proof</h3>
+
+                    <a
+                        :href="photoUrl(pickup.photo_path)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <img
+                            :src="photoUrl(pickup.photo_path)"
+                            alt="Pickup proof"
+                            class="max-h-64 rounded-lg border object-contain"
+                        />
+                    </a>
+
+                    <p class="text-xs text-muted-foreground">
+                        Photo taken:
+                        {{ formatDate(pickup.photo_taken_at) }}
+                    </p>
+                </div>
+
                 <!-- Actions for active pickups -->
                 <div
                     v-if="
@@ -453,7 +596,7 @@ function visitPage(url: string | null) {
                 aria-modal="true"
                 aria-labelledby="confirmation-title"
                 aria-describedby="confirmation-description"
-                class="w-full max-w-md space-y-5 rounded-xl border bg-background p-6 shadow-xl"
+                class="max-h-[90vh] w-full max-w-md space-y-5 overflow-y-auto rounded-xl border bg-background p-6 shadow-xl"
             >
                 <div class="space-y-2">
                     <h2 id="confirmation-title" class="text-lg font-semibold">
@@ -465,6 +608,114 @@ function visitPage(url: string | null) {
                         class="text-sm text-muted-foreground"
                     >
                         {{ confirmationMessage }}
+                    </p>
+                </div>
+
+                <!-- Pickup photo upload -->
+                <div
+                    v-if="confirmation.action === 'start'"
+                    class="space-y-3 rounded-lg border p-4"
+                >
+                    <div>
+                        <h3 class="text-sm font-semibold">
+                            Pickup Photo Proof
+                            <span class="text-red-500">*</span>
+                        </h3>
+
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Take a photo of the laundry you are collecting from
+                            the customer. This photo is required to start the
+                            pickup.
+                        </p>
+                    </div>
+
+                    <input
+                        ref="photoInput"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        capture="environment"
+                        class="hidden"
+                        @change="handlePhotoChange"
+                    />
+
+                    <!-- Photo preview -->
+                    <div v-if="photoPreview" class="space-y-3">
+                        <img
+                            :src="photoPreview"
+                            alt="Pickup proof preview"
+                            class="max-h-64 w-full rounded-lg border object-contain"
+                        />
+
+                        <div class="flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                class="rounded-md border px-3 py-2 text-sm hover:bg-muted"
+                                :disabled="isSubmitting"
+                                @click="selectPhoto"
+                            >
+                                Retake Photo
+                            </button>
+
+                            <button
+                                type="button"
+                                class="rounded-md border border-red-300 px-3 py-2 text-sm text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950"
+                                :disabled="isSubmitting"
+                                @click="removePhoto"
+                            >
+                                Remove Photo
+                            </button>
+                        </div>
+
+                        <p class="text-xs text-green-600 dark:text-green-400">
+                            Photo selected successfully.
+                        </p>
+                    </div>
+
+                    <!-- Upload button -->
+                    <button
+                        v-else
+                        type="button"
+                        class="flex w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center transition hover:bg-muted"
+                        :disabled="isSubmitting"
+                        @click="selectPhoto"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="32"
+                            height="32"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="text-muted-foreground"
+                        >
+                            <path
+                                d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"
+                            />
+                            <circle cx="12" cy="13" r="3" />
+                        </svg>
+
+                        <span class="text-sm font-medium">
+                            Take or Upload Pickup Photo
+                        </span>
+
+                        <span class="text-xs text-muted-foreground">
+                            JPG, PNG or WEBP · Maximum 5 MB
+                        </span>
+                    </button>
+
+                    <!-- Photo validation errors -->
+                    <p
+                        v-if="photoClientError || validationErrors.photo"
+                        class="text-sm text-red-600 dark:text-red-400"
+                    >
+                        {{ photoClientError || validationErrors.photo }}
+                    </p>
+
+                    <p v-if="!photoFile" class="text-xs text-muted-foreground">
+                        Please take a photo before starting this pickup.
                     </p>
                 </div>
 
@@ -531,7 +782,10 @@ function visitPage(url: string | null) {
                     <button
                         type="button"
                         class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                        :disabled="isSubmitting"
+                        :disabled="
+                            isSubmitting ||
+                            (confirmation.action === 'start' && !photoFile)
+                        "
                         @click="confirmAction"
                     >
                         {{

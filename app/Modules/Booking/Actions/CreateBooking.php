@@ -35,6 +35,7 @@ final class CreateBooking
                 'booking_number' => 'BKG-' . Str::uuid(),
                 'customer_id' => $data->customerId,
                 'pickup_address' => $data->pickupAddress,
+                'mobile_number' => $data->mobileNumber,
                 'preferred_pickup_at' => $data->preferredPickupAt,
                 'customer_notes' => $data->customerNotes,
                 'status' => 'pending',

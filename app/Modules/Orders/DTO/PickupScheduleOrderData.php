@@ -8,6 +8,7 @@ final readonly class PickupScheduleOrderData
         public int $id,
         public string $orderNumber,
         public ?string $bookingNumber,
+        public ?string $mobileNumber,
         public string $status,
         public string $customerName,
         public ?string $requestedPickupAt,

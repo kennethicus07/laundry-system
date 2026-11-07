@@ -46,6 +46,7 @@ const service = computed(() => props.service);
 
 const form = useForm({
     pickup_address: '',
+    mobile_number: '',
     preferred_pickup_at: '',
     estimated_quantity: '1',
     customer_notes: '',
@@ -162,6 +163,33 @@ function submitBooking() {
                                 class="text-sm text-destructive"
                             >
                                 {{ form.errors.pickup_address }}
+                            </p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label for="mobile_number">Mobile number</Label>
+
+                            <Input
+                                id="mobile_number"
+                                v-model="form.mobile_number"
+                                type="tel"
+                                inputmode="numeric"
+                                maxlength="12"
+                                placeholder="Enter your mobile number"
+                                required
+                                :aria-invalid="!!form.errors.mobile_number"
+                                @input="
+                                    form.mobile_number = form.mobile_number
+                                        .replace(/\D/g, '')
+                                        .slice(0, 12)
+                                "
+                            />
+
+                            <p
+                                v-if="form.errors.mobile_number"
+                                class="text-sm text-destructive"
+                            >
+                                {{ form.errors.mobile_number }}
                             </p>
                         </div>
 

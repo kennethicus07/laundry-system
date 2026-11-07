@@ -21,6 +21,7 @@ class Booking extends Model
         'booking_number',
         'customer_id',
         'pickup_address',
+        'mobile_number',
         'preferred_pickup_at',
         'customer_notes',
         'status',

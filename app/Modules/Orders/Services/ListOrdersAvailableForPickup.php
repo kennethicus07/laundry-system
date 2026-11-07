@@ -16,7 +16,7 @@ final class ListOrdersAvailableForPickup implements PickupScheduleOrders
         return LaundryOrder::query()
             ->with([
                 'customer:id,name',
-                'booking:id,booking_number,preferred_pickup_at,pickup_address',
+                'booking:id,booking_number,preferred_pickup_at,pickup_address,mobile_number',
             ])
             ->where(
                 'status',
@@ -38,7 +38,7 @@ final class ListOrdersAvailableForPickup implements PickupScheduleOrders
         $query = LaundryOrder::query()
             ->with([
                 'customer:id,name',
-                'booking:id,booking_number,preferred_pickup_at,pickup_address',
+                'booking:id,booking_number,preferred_pickup_at,pickup_address,mobile_number',
             ])
             ->where(
                 'status',
@@ -105,7 +105,7 @@ final class ListOrdersAvailableForPickup implements PickupScheduleOrders
 
         $order->load([
             'customer:id,name',
-            'booking:id,booking_number,preferred_pickup_at,pickup_address',
+            'booking:id,booking_number,preferred_pickup_at,pickup_address,mobile_number',
         ]);
 
         return $this->toDto($order);
@@ -118,6 +118,7 @@ final class ListOrdersAvailableForPickup implements PickupScheduleOrders
             id: (int) $order->id,
             orderNumber: $order->order_number,
             bookingNumber: $order->booking?->booking_number,
+            mobileNumber: $order->booking?->mobile_number,
             status: $order->status,
             customerName: $order->customer?->name ?? 'Unknown customer',
             requestedPickupAt: $order->booking?->preferred_pickup_at
