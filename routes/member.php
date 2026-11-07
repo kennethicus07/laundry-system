@@ -10,7 +10,7 @@ Route::middleware(['auth', 'verified', 'role:member'])->group(function () {
     Route::prefix('member')->name('member.')->group(function () {
        
         Route::prefix('dashboard')->name('dashboard.')->group(function () {
-            Route::get('/', [ServiceController::class, 'index'])->name('index');
+            Route::get('/', DashboardController::class)->name('index');
         });
 
         Route::prefix('laundry-services')->name('laundry-services.')->group(function () {

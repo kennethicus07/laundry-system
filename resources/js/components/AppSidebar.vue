@@ -127,6 +127,11 @@ const mainNavItems = computed<NavItem[]>(() => {
     if (isMember.value) {
         items.push(
             {
+                title: 'Dashboard',
+                href: '/member/dashboard',
+                icon: LayoutGrid,
+            },
+            {
                 title: 'Laundry Services',
                 href: '/member/laundry-services',
                 icon: LayoutGrid,

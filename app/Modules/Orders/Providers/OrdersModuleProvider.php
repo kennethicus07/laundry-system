@@ -20,6 +20,8 @@ use App\Modules\Orders\Contracts\BillableOrder;
 use App\Modules\Orders\Repositories\EloquentBillableOrderReader; 
 use App\Modules\Orders\Contracts\OrderDashboardReader;
 use App\Modules\Orders\Services\ReadOrderDashboard;
+use App\Modules\Orders\Contracts\MemberOrderDashboardReader;
+use App\Modules\Orders\Services\ReadMemberOrderDashboard;
 
 
 use Illuminate\Support\ServiceProvider;
@@ -73,5 +75,9 @@ class OrdersModuleProvider extends ServiceProvider
             ReadOrderDashboard::class,
         );
         
+        $this->app->bind(
+            MemberOrderDashboardReader::class,
+            ReadMemberOrderDashboard::class,
+        );
     }
 }
