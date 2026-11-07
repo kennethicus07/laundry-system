@@ -8,4 +8,6 @@ return [
     FortifyServiceProvider::class,
     App\Modules\Services\Providers\ServicesModuleProvider::class,
     App\Modules\Orders\Providers\OrdersModuleProvider::class,
+    App\Modules\Booking\Providers\BookingModuleProvider::class,
+    App\Modules\Billing\Providers\BillingModuleProvider::class,
 ];

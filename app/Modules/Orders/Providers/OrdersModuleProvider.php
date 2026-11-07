@@ -17,7 +17,9 @@ use App\Modules\Orders\Services\ListOrdersAvailableForDelivery;
 use App\Modules\Orders\Contracts\OrderDeliverer;
 use App\Modules\Orders\Services\DeliverLaundryOrder;
 use App\Modules\Orders\Contracts\BillableOrder;
-use App\Modules\Orders\Repositories\EloquentBillableOrderReader;
+use App\Modules\Orders\Repositories\EloquentBillableOrderReader; 
+use App\Modules\Orders\Contracts\OrderDashboardReader;
+use App\Modules\Orders\Services\ReadOrderDashboard;
 
 
 use Illuminate\Support\ServiceProvider;
@@ -62,9 +64,14 @@ class OrdersModuleProvider extends ServiceProvider
         );
                
        $this->app->bind(
-    BillableOrder::class,
-    EloquentBillableOrderReader::class,
-);
+            BillableOrder::class,
+            EloquentBillableOrderReader::class,
+        );
+
+        $this->app->bind(
+            OrderDashboardReader::class,
+            ReadOrderDashboard::class,
+        );
         
     }
 }
